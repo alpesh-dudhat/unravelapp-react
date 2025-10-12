@@ -1,0 +1,288 @@
+@use "sass:math";
+@use "sass:list";
+@use "sass:map";
+@use "sass:string";
+@use "sass:color";
+
+
+// Variables
+$font-family-base: 'Inter', Arial, sans-serif;
+$font-size-base: 16px;
+$line-height-base: 1.6;
+$background-base: #f5f7fa;
+
+$primary-color: #2d6cdf;
+$secondary-color: #f5f7fa;
+$accent-color: #ff5a5f;
+$success-color: #27ae60;
+$text-color: #222;
+$muted-color: #888;
+$border-radius: 12px;
+$badge-radius: 16px;
+$card-shadow: 0 2px 8px rgba(0,0,0,0.08);
+
+// Mixins
+@mixin flex-center {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+// Responsive font sizing
+@mixin responsive-font {
+    font-size: $font-size-base;
+    @media (max-width: 900px) {
+        font-size: 15px;
+    }
+    @media (max-width: 600px) {
+        font-size: 14px;
+    }
+    @media (max-width: 400px) {
+        font-size: 13px;
+    }
+}
+
+body {
+    font-family: $font-family-base;
+    @include responsive-font;
+    line-height: $line-height-base;
+    background: $background-base;
+    color: $text-color;
+    margin: 0;
+    padding: 0;
+}
+
+a {
+    color: $primary-color;
+    text-decoration: none;
+    transition: color 0.2s;
+    &:hover {
+        color: color.adjust($primary-color, $lightness: -10%);
+    }
+}
+
+// Utility Classes
+.flex-center {
+    @include flex-center;
+}
+
+.text-muted {
+    color: $muted-color;
+}
+
+.rounded {
+    border-radius: $border-radius;
+}
+
+// Global responsive padding and margin
+html, body {
+    @media (max-width: 900px) {
+        padding: 0 1.5vw;
+    }
+    @media (max-width: 600px) {
+        padding: 0 2vw;
+    }
+    @media (max-width: 400px) {
+        padding: 0 3vw;
+    }
+}
+
+// Responsive utility classes
+.hide-on-mobile {
+    @media (max-width: 600px) {
+        display: none !important;
+    }
+}
+
+.show-on-mobile {
+    display: none !important;
+    @media (max-width: 600px) {
+        display: block !important;
+    }
+}
+
+
+
+
+//Room Variant Card Styles
+
+/* Card Container */
+
+
+.room-card {
+    background: #fff;
+    border-radius: $border-radius;
+    box-shadow: $card-shadow;
+    overflow: hidden;
+    margin: 1.5rem 0;
+    display: flex;
+    flex-direction: column;
+    max-width: 420px;
+
+    /* Sliding Images */
+    .room-card__images {
+        position: relative;
+        width: 100%;
+        height: 220px;
+        overflow: hidden;
+
+        .room-card__image-slider {
+            display: flex;
+            transition: transform 0.4s cubic-bezier(.4,0,.2,1);
+            img {
+                width: 100%;
+                height: 220px;
+                object-fit: cover;
+                border-top-left-radius: $border-radius;
+                border-top-right-radius: $border-radius;
+            }
+        }
+        .room-card__slider-controls {
+            position: absolute;
+            bottom: 12px;
+            right: 12px;
+            display: flex;
+            gap: 8px;
+            button {
+                background: rgba(0,0,0,0.4);
+                border: none;
+                color: #fff;
+                border-radius: 50%;
+                width: 32px;
+                height: 32px;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 1.2rem;
+                transition: background 0.2s;
+                &:hover {
+                    background: $primary-color;
+                }
+            }
+        }
+    }
+
+    /* Card Content */
+    .room-card__content {
+        padding: 1.2rem 1.4rem;
+
+        .room-card__row {
+            display: flex;
+            align-items: center;
+            gap: 1.2rem;
+            margin-bottom: 0.8rem;
+
+            .room-card__icon {
+                width: 28px;
+                height: 28px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background: $secondary-color;
+                border-radius: 50%;
+                margin-right: 0.5rem;
+                svg {
+                    width: 18px;
+                    height: 18px;
+                    fill: $primary-color;
+                }
+            }
+            .room-card__label {
+                font-size: 1rem;
+                color: $text-color;
+                font-weight: 500;
+            }
+        }
+
+        /* Price Section */
+        .room-card__price-section {
+            margin: 1rem 0;
+            display: flex;
+            align-items: center;
+            gap: 1.2rem;
+
+            .room-card__price {
+                font-size: 1.4rem;
+                font-weight: 700;
+                color: $primary-color;
+            }
+            .room-card__strikethrough {
+                font-size: 1rem;
+                color: $muted-color;
+                text-decoration: line-through;
+                margin-right: 0.5rem;
+            }
+            .room-card__discount-badge {
+                background: $accent-color;
+                color: #fff;
+                border-radius: $badge-radius;
+                padding: 0.2rem 0.7rem;
+                font-size: 0.95rem;
+                font-weight: 600;
+                display: flex;
+                align-items: center;
+                gap: 0.3rem;
+                svg {
+                    width: 16px;
+                    height: 16px;
+                    fill: #fff;
+                }
+            }
+        }
+
+        .room-card__includes {
+            font-size: 0.95rem;
+            color: $success-color;
+            margin-bottom: 0.5rem;
+        }
+
+        /* Cancellation Policy */
+        .room-card__cancellation {
+            font-size: 0.95rem;
+            color: $muted-color;
+            margin-bottom: 1rem;
+        }
+
+        /* Special Request */
+        .room-card__special-request {
+            font-size: 1rem;
+            color: $text-color;
+            margin-bottom: 1.2rem;
+            font-weight: 500;
+        }
+
+        /* Select Button */
+        .room-card__select-btn {
+            background: $primary-color;
+            color: #fff;
+            border: none;
+            border-radius: $border-radius;
+            padding: 0.8rem 1.6rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+            box-shadow: 0 1px 4px rgba(45,108,223,0.08);
+            &:hover {
+                background: color.adjust($primary-color, $lightness: -8%);
+            }
+        }
+    }
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+    .room-card {
+        max-width: 100%;
+        .room-card__images {
+            height: 160px;
+            .room-card__image-slider img {
+                height: 160px;
+            }
+        }
+        .room-card__content {
+            padding: 1rem;
+        }
+    }
+}
