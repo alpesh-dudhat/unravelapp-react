@@ -17,12 +17,12 @@ const OptimizedVideo = ({
     const [isLoaded, setIsLoaded] = useState(false);
     const [shouldLoadVideo, setShouldLoadVideo] = useState(false);
     const [currentTime, setCurrentTime] = useState(0);
-    
-    const [containerRef, isIntersecting, hasRendered] = useIntersectionObserver({ 
+
+    const [containerRef, isIntersecting, hasRendered] = useIntersectionObserver({
         threshold: 0.1,
         rootMargin: '100px'
     });
-    
+
     const [hoverRef, isHovered] = useHover();
 
     const setRefs = useCallback((node) => {
@@ -123,20 +123,20 @@ const OptimizedVideo = ({
                     preload={preload}
                     onCanPlay={handleCanPlay}
                     onError={handleError}
-                    className={`optimized-video ${
-                        isLoaded ? 'optimized-video--loaded' : 'optimized-video--loading'
-                    }`}
+                    className={`optimized-video ${isLoaded ? 'optimized-video--loaded' : 'optimized-video--loading'
+                        }`}
                     style={{ opacity: isLoaded ? 1 : 0 }}
                     {...props}
                 />
             )}
-            
+
+
             {shouldLoadVideo && !isLoaded && !hasError && (
                 <div className="optimized-video__loading">
                     <div className="video-skeleton"></div>
                 </div>
             )}
-            
+
             {hasError && (
                 <div className="optimized-video__error">
                     <span>Video failed to load</span>
@@ -149,7 +149,7 @@ const OptimizedVideo = ({
                 </div>
             )}
 
-        
+
         </div>
     );
 };
