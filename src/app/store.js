@@ -7,9 +7,7 @@ export const store = configureStore({
     },
     middleware: (getDefaultMiddleware) =>
         getDefaultMiddleware({
-            serializableCheck: {
-                ignoredActions: ['persist/PERSIST', 'persist/REHYDRATE'],
-                ignoredPaths: ['rooms.rooms', 'rooms.hotel'], // adjust based on your state structure
-            },
+            immutableCheck: false,
+            serializableCheck: false,
         }),
 })
