@@ -42,6 +42,7 @@ const OptimizedVideo = ({
         }
     }, [isIntersecting, hasRendered, shouldLoadVideo]);
 
+    // Track video time
     useEffect(() => {
         const video = videoRef.current;
         if (!video) return;
@@ -68,20 +69,15 @@ const OptimizedVideo = ({
 
     const handleLoadedMetadata = useCallback(() => {
         console.log('Video loaded metadata');
-        
         if (isSafari) {
             setIsLoaded(true);
         }
     }, [isSafari]);
 
-    const handleLoadStart = useCallback(() => {
-        console.log('Video load started');
-    }, []);
-
     const handleError = useCallback((e) => {
         console.error('Video error:', e);
         setHasError(true);
-        setIsLoaded(true); 
+        setIsLoaded(true);
         onError?.(e);
     }, [onError]);
 
@@ -96,10 +92,13 @@ const OptimizedVideo = ({
                         video.currentTime = currentTime;
                     }
                     await video.play();
+                    console.log('Video playing from time:', currentTime);
                 } else {
                     video.pause();
+                    console.log('Video paused, showing current frame as thumbnail');
                 }
             } catch (error) {
+                console.warn('Video play failed:', error);
                 if (error.name === 'NotAllowedError') {
                     video.muted = true;
                     try {
@@ -123,7 +122,7 @@ const OptimizedVideo = ({
                 setIsLoaded(true);
             }
         }, 3000);
-        
+
         return () => clearTimeout(safariFallbackTimer);
     }, [shouldLoadVideo, src, isLoaded, isSafari]);
 
@@ -156,7 +155,6 @@ const OptimizedVideo = ({
                     onCanPlay={handleCanPlay}
                     onLoadedData={handleLoadedData}
                     onLoadedMetadata={handleLoadedMetadata}
-                    onLoadStart={handleLoadStart}
                     onError={handleError}
                     className={`optimized-video ${isLoaded ? 'optimized-video--loaded' : 'optimized-video--loading'
                         }`}
@@ -180,6 +178,7 @@ const OptimizedVideo = ({
             {isLoaded && !isHovered && (
                 <div className="optimized-video__hover-indicator">
                     <div className="hover-play-icon">▶</div>
+                    <span>Hover to play</span>
                 </div>
             )}
         </div>
