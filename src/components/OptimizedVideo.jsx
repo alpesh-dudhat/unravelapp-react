@@ -147,7 +147,7 @@ const OptimizedVideo = ({
             {shouldLoadVideo && src && !hasError && (
                 <video
                     ref={videoRef}
-                    src={src}
+                    src={src+'#t=0.001'}
                     muted={muted}
                     loop={loop}
                     playsInline={playsInline}
