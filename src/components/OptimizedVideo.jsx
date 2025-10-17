@@ -17,6 +17,12 @@ const OptimizedVideo = ({
     const [isLoaded, setIsLoaded] = useState(false);
     const [shouldLoadVideo, setShouldLoadVideo] = useState(false);
     const [currentTime, setCurrentTime] = useState(0);
+    const [isSafari, setIsSafari] = useState(false);
+
+    useEffect(() => {
+        const isSafariBrowser = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+        setIsSafari(isSafariBrowser);
+    }, []);
 
     const [containerRef, isIntersecting, hasRendered] = useIntersectionObserver({
         threshold: 0.1,
@@ -32,7 +38,6 @@ const OptimizedVideo = ({
 
     useEffect(() => {
         if (isIntersecting && hasRendered && !shouldLoadVideo) {
-            // console.log('Loading video because it became visible');
             setShouldLoadVideo(true);
         }
     }, [isIntersecting, hasRendered, shouldLoadVideo]);
@@ -51,49 +56,76 @@ const OptimizedVideo = ({
         };
     }, []);
 
+    const handleCanPlay = useCallback(() => {
+        console.log('Video can play');
+        setIsLoaded(true);
+    }, []);
+
+    const handleLoadedData = useCallback(() => {
+        console.log('Video loaded data');
+        setIsLoaded(true);
+    }, []);
+
+    const handleLoadedMetadata = useCallback(() => {
+        console.log('Video loaded metadata');
+        
+        if (isSafari) {
+            setIsLoaded(true);
+        }
+    }, [isSafari]);
+
+    const handleLoadStart = useCallback(() => {
+        console.log('Video load started');
+    }, []);
+
+    const handleError = useCallback((e) => {
+        console.error('Video error:', e);
+        setHasError(true);
+        setIsLoaded(true); 
+        onError?.(e);
+    }, [onError]);
+
     useEffect(() => {
         const video = videoRef.current;
         if (!video || !shouldLoadVideo || !isLoaded) return;
 
-        const playVideo = async () => {
+        const controlVideo = async () => {
             try {
                 if (isHovered) {
                     if (video.currentTime !== currentTime) {
                         video.currentTime = currentTime;
                     }
                     await video.play();
-                    // console.log('Video playing from time:', currentTime);
                 } else {
                     video.pause();
-                    // console.log('Video paused at time:', currentTime);
                 }
             } catch (error) {
-                // console.warn('Video play failed:', error);
                 if (error.name === 'NotAllowedError') {
                     video.muted = true;
                     try {
                         await video.play();
                     } catch (e) {
-                        console.warn('Muted video play also failed:', e);
+                        console.log(e)
                     }
                 }
             }
         };
 
-        playVideo();
+        controlVideo();
     }, [isHovered, shouldLoadVideo, isLoaded, currentTime]);
 
-    const handleCanPlay = useCallback(() => {
-        setIsLoaded(true);
-        // console.log('Video can play');
-    }, []);
+    useEffect(() => {
+        if (!shouldLoadVideo || !src || isLoaded) return;
 
-    const handleError = useCallback((e) => {
-        // console.error('Video error:', e);
-        setHasError(true);
-        setIsLoaded(true);
-        onError?.(e);
-    }, [onError]);
+        const safariFallbackTimer = setTimeout(() => {
+            if (isSafari && !isLoaded) {
+                console.log('Safari fallback: forcing loaded state');
+                setIsLoaded(true);
+            }
+        }, 3000);
+        
+        return () => clearTimeout(safariFallbackTimer);
+    }, [shouldLoadVideo, src, isLoaded, isSafari]);
 
     useEffect(() => {
         if (!shouldLoadVideo) {
@@ -122,6 +154,9 @@ const OptimizedVideo = ({
                     playsInline={playsInline}
                     preload={preload}
                     onCanPlay={handleCanPlay}
+                    onLoadedData={handleLoadedData}
+                    onLoadedMetadata={handleLoadedMetadata}
+                    onLoadStart={handleLoadStart}
                     onError={handleError}
                     className={`optimized-video ${isLoaded ? 'optimized-video--loaded' : 'optimized-video--loading'
                         }`}
@@ -129,7 +164,6 @@ const OptimizedVideo = ({
                     {...props}
                 />
             )}
-
 
             {shouldLoadVideo && !isLoaded && !hasError && (
                 <div className="optimized-video__loading">
@@ -148,8 +182,6 @@ const OptimizedVideo = ({
                     <div className="hover-play-icon">▶</div>
                 </div>
             )}
-
-
         </div>
     );
 };

@@ -1006,3 +1006,21 @@ main {
   clip: rect(1px, 1px, 1px, 1px);
   white-space: nowrap;
 }
+
+
+
+// Safari-specific video fixes
+@supports (-webkit-touch-callout: none) {
+  .optimized-video {
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+    
+    will-change: opacity;
+  }
+  
+  .optimized-video-container {
+    background: transparent;
+    
+    -webkit-mask-image: -webkit-radial-gradient(white, black);
+  }
+}
