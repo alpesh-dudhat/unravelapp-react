@@ -1,16 +1,16 @@
-//..
 import { useCallback, useEffect, useRef } from 'react';
 
 export const useInfiniteScroll = (loadMore, hasMore, isLoading, options = {}) => {
     const {
         root = null,
-        rootMargin = '100px',
+        rootMargin = '500px',
         threshold = 0
     } = options;
 
     const observerRef = useRef(null);
     const isLoadingRef = useRef(isLoading);
     const hasMoreRef = useRef(hasMore);
+    
 
     useEffect(() => {
         isLoadingRef.current = isLoading;

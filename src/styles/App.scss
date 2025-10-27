@@ -3,7 +3,7 @@
 @use "sass:map";
 @use "sass:string";
 @use "sass:color";
-
+@use "./expanded-panel.scss";
 @import url("https://fonts.googleapis.com/css2?family=Outfit:wght@500&display=swap");
 
 $font-family-base: "Outfit", sans-serif;
@@ -18,7 +18,7 @@ $success-color: #27ae60;
 $text-color: #3e3a3a;
 $muted-color: #888;
 $dark-color: #1f2937;
-$light-color: #f8fafc;
+$light-color: #eaeef3;
 $theme-color: rgb(32, 79, 94);
 
 $border-radius: 12px;
@@ -55,7 +55,6 @@ $bp-xl: 1200px;
   margin: 0;
 }
 
-/* ===== MIXINS ===== */
 @mixin flex-center {
   display: flex;
   align-items: center;
@@ -254,9 +253,10 @@ main {
 
 .room-list {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
   gap: 2rem;
   margin-top: 20px;
+  position: relative;
 
   @media (max-width: 768px) {
     gap: 1.5rem;
@@ -341,16 +341,15 @@ main {
     background: #f0f0f0;
     color: #666;
     z-index: 3;
-
   }
-   .video-skeleton {
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(90deg, #e0e0e0 25%, #f0f0f0 50%, #e0e0e0 75%);
-      background-size: 200% 100%;
-      animation: loading 1.5s infinite;
-      border-radius: 4px;
-    }
+  .video-skeleton {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, #e0e0e0 25%, #f0f0f0 50%, #e0e0e0 75%);
+    background-size: 200% 100%;
+    animation: loading 1.5s infinite;
+    border-radius: 4px;
+  }
 
   .optimized-video__error {
     position: absolute;
@@ -443,11 +442,12 @@ main {
   /* UPDATED slider controls: accessible, responsive, variable-driven */
   .room-card__slider-controls {
     position: absolute;
-    bottom: 1rem;
+    bottom: 0.2rem;
     left: 50%;
-    transform: translateX(-50%);
+    transform: translate(-50%, -50%);
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: $gap;
     background: transparent;
     padding: 0;
@@ -456,6 +456,8 @@ main {
     font-size: 0.875rem;
     z-index: 30;
     pointer-events: none; // container won't block interactions; children will
+    width: 100%;
+    max-width: 200px;
 
     > * {
       pointer-events: auto;
@@ -465,6 +467,7 @@ main {
       border-radius: 10px;
       padding: 3px;
       cursor: pointer;
+      font-size: 11px;
     }
 
     /* control inner wrapper visual background */
@@ -514,14 +517,12 @@ main {
           0 2px 6px rgba(0, 0, 0, 0.35);
       }
 
-      /* Prefer inline SVG icons in markup; keep text arrows as fallback */
       svg {
         width: 18px;
         height: 18px;
         display: block;
       }
 
-      /* larger on desktop */
       @media (min-width: $bp-lg) {
         width: $btn-size-lg;
         height: $btn-size-lg;
@@ -550,11 +551,10 @@ main {
       }
 
       @media (max-width: $bp-xs) {
-        display: none; // hide on very tiny screens to reduce clutter
+        display: none; 
       }
     }
 
-    /* layout change for small screens: full width bottom bar */
     @media (max-width: $bp-sm) {
       left: 12px;
       right: 12px;
@@ -576,7 +576,6 @@ main {
       }
     }
 
-    /* modifier for side-by-side (left & right) style on large screens */
     &--side-by-side {
       left: 12px;
       right: 12px;
@@ -615,7 +614,7 @@ main {
 }
 
 .room-card__title {
-  font-size: 1rem;
+  font-size: 0.9rem;
   font-weight: normal;
   color: $dark-color;
   margin: 0;
@@ -654,11 +653,15 @@ main {
   }
 }
 
-/* Price section */
 .room-card__price-section {
   background: $light-color;
-  padding: 0.5rem;
+  padding: 0.4rem;
   border-radius: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  line-height: normal;
+  margin-top: 0.1rem;
 }
 
 .room-card__price-info {
@@ -667,20 +670,20 @@ main {
   color: #6b7280;
 }
 
-.room-card__taxes {
+.room-card__taxes, .room-card__variants_title {
   display: block;
   font-size: 0.75rem;
   color: $muted-color;
+  margin-top: 0.2rem;
 }
 
 .room-card__price {
   display: block;
-  font-size: 1rem;
+  font-size: 0.9rem;
   font-weight: 700;
   color: $theme-color;
 }
 
-/* CTA / select button */
 .room-card__select-btn {
   width: 100%;
   background: $theme-color;
@@ -710,7 +713,6 @@ main {
   }
 }
 
-// Placeholders
 .room-card__image-placeholder,
 .media-placeholder,
 .no-media-placeholder {
@@ -1007,20 +1009,17 @@ main {
   white-space: nowrap;
 }
 
-
-
-// Safari-specific video fixes
 @supports (-webkit-touch-callout: none) {
   .optimized-video {
     transform: translateZ(0);
     -webkit-transform: translateZ(0);
-    
+
     will-change: opacity;
   }
-  
+
   .optimized-video-container {
     background: transparent;
-    
+
     -webkit-mask-image: -webkit-radial-gradient(white, black);
   }
 }

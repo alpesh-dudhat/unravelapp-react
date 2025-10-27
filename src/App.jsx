@@ -6,7 +6,7 @@ function App() {
     <main>
       <img
         src={bg} className="bgImg"
-        alt="shape"
+        alt="shape" loading="lazy"
       />
       <div className="header">
         <div className="sub">Rooms</div>

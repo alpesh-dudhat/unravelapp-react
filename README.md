@@ -1,69 +1,75 @@
-# Unravel — Rooms Listing (README)
+# Unravel — Rooms Listing
 
-> Lightweight React + Vite project showcasing optimized media loading, client-side pagination, and clean component architecture.
+> Lightweight React + Vite app demonstrating an optimized, performant hotel room listing with progressive media loading, client-side pagination, and clean component architecture.
 
 ---
 
 ## Table of contents
 
-1. [Overview](#overview)
-2. [Getting started](#getting-started)
-3. [Project structure & architecture](#project-structure--architecture)
-4. [Key components and hooks](#key-components-and-hooks)
-5. [State management](#state-management)
-6. [Performance optimizations applied](#performance-optimizations-applied)
-7. [Build & deployment notes](#build--deployment-notes)
-8. [Troubleshooting & common issues](#troubleshooting--common-issues)
-9. [Future improvements](#future-improvements)
+1. [Overview](#overview)  
+2. [Quick start](#quick-start)  
+3. [Project structure](#project-structure)  
+4. [Architecture & responsibilities](#architecture--responsibilities)  
+5. [Key components & hooks](#key-components--hooks)  
+6. [Data normalization & media priority](#data-normalization--media-priority)  
+7. [Performance optimizations applied](#performance-optimizations-applied)  
+8. [Accessibility & UX considerations](#accessibility--ux-considerations)  
+
 
 ---
 
-# Overview
+## Overview
 
-This project is a small React application bootstrapped with **Vite**. It renders a list of hotel rooms with media (images/videos), implements client-side pagination using a normalized sample dataset, and focuses on performance-friendly patterns for media-heavy UI.
+This project is a small React application built with **Vite** that renders a paginated list of hotel rooms. Each room card shows primary media (video or image). An expanded variants panel lists all booking variants for a room (each variant shows detailed info and media). The app focuses on avoiding unnecessary work — lazy-loading media, keeping DOM small, and using memoization to prevent wasted renders.
 
 The sample data (`src/assets/sample.json`) is normalized and paginated on the client to mimic server-backed listings.
 
+---
 
-# Getting started
+## Quick start
 
 **Prerequisites**
-- Node.js (recommended 16+)
-- npm
+
+- Node.js 16+ (recommended)
+- npm (or yarn)
 
 **Install & run (development)**
 
 ```bash
 npm install
 npm run dev
+# open http://localhost:5173
 ```
 
-Open `http://localhost:5173` (default Vite port) in your browser.
-
-**Build for production**
+**Build & preview**
 
 ```bash
 npm run build
-npm run preview    # preview production build locally
+npm run preview
 ```
 
+---
 
-# Project structure & architecture
+## Project structure
 
 ```
 src/
 ├─ app/
-│  └─ store.js            # Redux store setup (RTK)
+│  └─ store.js                    # Redux Toolkit store setup
 ├─ assets/
-│  └─ sample.json         # sample data + static assets (images)
+│  └─ sample.json                 # sample dataset (normalized in client)
 ├─ components/
-│  ├─ RoomList.jsx        # infinite-scroll list and skeletons
-│  ├─ RoomCard.jsx        # card that shows images or video
+│  ├─ App.jsx
+│  ├─ RoomList.jsx
+│  ├─ RoomCard.jsx
 │  ├─ RoomCardSkeleton.jsx
+│  ├─ VariantCard.jsx
+│  ├─ VariantMini.jsx
+│  ├─ ExpandedVariantsPanel.jsx
 │  ├─ ProgressiveImage.jsx
 │  └─ OptimizedVideo.jsx
 ├─ features/
-│  └─ roomSlice.js        # redux slice: loadRooms, loadMoreRooms
+│  └─ roomSlice.js                # redux slice: loadRooms, loadMoreRooms
 ├─ hooks/
 │  ├─ useIntersectionObserver.js
 │  ├─ useInfiniteScroll.js
@@ -71,88 +77,136 @@ src/
 │  ├─ useDebounce.js
 │  ├─ useThrottle.js
 │  └─ useWindowDimensions.js
+├─ styles/
+│  └─ expanded-panel.scss
 ├─ utils/
-│  └─ roomsUtils.js       # normalizeRooms
-├─ App.jsx
+│  ├─ roomsUtils.js               # normalizeRooms
+│  └─ mediaUtils.js               # getMediaForVariant
 └─ main.jsx
 ```
 
-**Architecture notes**
-- Single-page React app built with Vite for fast dev server and optimized builds.
-- Global state via **Redux Toolkit** (small slice `rooms` keeps UI state + pagination state).
-- Components are function components with hooks and memoization where appropriate.
-- Media handling is delegated to `ProgressiveImage` and `OptimizedVideo` components to keep `RoomCard` simple.
+---
 
+## Architecture & responsibilities
 
-# Key components and hooks
+- **Presentation**: small focused components; heavy work delegated to `ProgressiveImage` and `OptimizedVideo`.
+- **State**: Redux Toolkit (`rooms` slice) holds normalized data and client-side pagination state. UI-specific state (expanded panel id, hovered state) is local.
+- **Normalization**: `normalizeRooms` maps the raw API/sample payload to a consistent shape with variant-level `media`, `promo`, and `cancellationInfo`.
+- **Separation of concerns**:
+  - `RoomList` — orchestration, infinite scroll, skeletons, expanded panel state.
+  - `RoomCard` — collapsed card showing room-level media + first two `VariantMini`s and "See more".
+  - `ExpandedVariantsPanel` — accessible slide-in panel that lists `VariantCard`s.
+  - `VariantCard` — full variant details (media, display properties, promo, price, cancellation, select CTA).
 
-## `RoomList`
-- Orchestrates loading initial rooms and loading more via an infinite scroll.
-- Renders skeletons while loading.
-- Uses `useInfiniteScroll` hook for intersection-observer based pagination trigger.
+---
 
-## `RoomCard`
-- Decides whether to render a video (`OptimizedVideo`) or image carousel (`ProgressiveImage`).
-- Uses `useMemo` and `useCallback` to avoid unnecessary recalculation and re-renders.
+## Key components & hooks
 
-## `ProgressiveImage`
-- Lazy-loads images only when they enter the viewport (via `useIntersectionObserver`).
-- Optionally shows a low-quality blurred placeholder (`lowQualitySrc`) while the high-quality image loads.
-- Builds a `srcSet` dynamically (with width query params) when not provided.
-- Handles error fallback to a placeholder image.
-- Uses `loading="lazy"` and a JS preloader to set state when the image is ready.
+**RoomList**
+- Loads initial rooms and triggers pagination with `useInfiniteScroll`.
+- Renders skeletons while loading and manages `expandedRoomId` state for the variants panel.
 
-## `OptimizedVideo`
-- Waits until the component is intersecting the viewport before setting `shouldLoadVideo`.
-- Tracks `currentTime` and `isHovered` (via `useHover`) to play/pause video when hovered.
-- Uses `onCanPlay` to mark `isLoaded` and apply fade-in via CSS.
-- Cleans up video source on unmount to release memory.
+**RoomCard**
+- Shows room-level media and two variant names via `VariantMini`.
+- Offers a "See more" button to expand full variants.
 
-## Hooks
-- `useIntersectionObserver` — wrapper around `IntersectionObserver` with `hasRendered` helper.
-- `useInfiniteScroll` — attaches an observer to the last list item and calls `loadMore` when needed.
-- `useHover` — simple hover detector with `mouseenter`/`mouseleave` listeners.
-- `useDebounce` / `useThrottle` — utility hooks for rate-limiting frequent events.
-- `useWindowDimensions` — throttled window resize listener.
+**VariantMini**
+- Lightweight pill showing `variant.name` for the first two variants in collapsed view.
 
+**ExpandedVariantsPanel**
+- Slide-in panel (desktop) / full-screen modal (mobile) listing `VariantCard`s.
+- Handles focus trap and close actions (Esc and click outside).
 
-# State management
+**VariantCard**
+- Shows media (video preferred), name, bed type, occupancy, price info, promo totals, cancellation policy, and `Select` CTA.
+- Uses `useIntersectionObserver` to lazy-mount media.
 
-We use **Redux Toolkit** and a single `rooms` slice (`features/roomSlice.js`) with the following responsibilities:
+**ProgressiveImage**
+- LQIP + `srcSet` generation + intersection-based lazy-load + fallback placeholder.
 
-- Normalize `sample.json` into a flat array of room objects (`normalizeRooms`).
-- Provide `loadRooms` reducer to populate `allRooms` and the first page into `rooms`.
-- Provide `loadMoreRooms` reducer to append the next page into `rooms` and maintain pagination flags.
-- Provide `resetRooms` / `setRoomsPagination` for UI control.
+**OptimizedVideo**
+- Lazy-loads video only when visible and cleans up on unmount.
+- Stores high-frequency `timeupdate` data in refs to avoid re-renders.
 
-The store is configured in `app/store.js` and disables immutable/serializable checks in middleware to avoid warnings for certain non-serializable values (only do this intentionally and with caution).
+**Hooks**
+- `useIntersectionObserver` — per-element visibility hook (`[ref, isIntersecting, hasRendered]`).
+- `useInfiniteScroll` — observes the list’s last element and triggers `loadMore()`; includes re-entrancy guards (`isLoadingRef`, `hasMoreRef`, `pendingRef`).
+- `useHover`, `useDebounce`, `useThrottle`, `useWindowDimensions` — utility hooks used across components.
 
+---
 
-# Performance optimizations applied
+## Data normalization & media priority
 
-This project focuses on fast initial load and reduced runtime work. Key strategies used:
+`normalizeRooms` maps raw payload into this stable variant shape:
 
-### 1. Lazy-loading & Intersection Observer
-- Images and videos are only loaded when they enter the viewport (`useIntersectionObserver`). This reduces initial network traffic and memory usage.
+```js
+{
+  id,
+  name,
+  price,
+  currency,
+  priceInfo,
+  isBookable,
+  displayProperties,
+  cancellationInfo,
+  promo: { offer_title, offer_total_price, offer_discounted_total_price },
+  media: { type: 'video'|'image', src } || null,
+  raw: { ...originalVariant }
+}
+```
 
-### 2. Low-quality placeholders (LQIP)
-- `ProgressiveImage` can accept a `lowQualitySrc` which is shown blurred while full-res image loads — perceived performance improvement.
+**Media priority (variant-level rule)**:
+1. Variant-level video (`variant.properties?.video_url?.med`) — use as variant media.
+2. Room-level video (`room.properties?.video_url?.med`) — fallback.
+3. Variant-level images (if present).
+4. Room-level images (`room.properties.room_images`).
+5. If none → do not render media container.
 
-### 3. Memoization & stable callbacks
-- Heavy computations (finding cheapest variant, display properties) are wrapped in `useMemo`.
-- Event handlers and navigation functions are stable via `useCallback`.
-- Presentational components are wrapped in `React.memo` to prevent re-renders when props are unchanged.
+`getMediaForVariant` implements this logic and is used by `VariantCard` and `normalizeRooms`.
 
-### 4. Throttling / Debouncing
-- `useThrottle` and `useDebounce` are available for window resize, search, or other frequent updates.
+---
 
-### 5. Skeletons for perceived performance
-- Loading skeletons are rendered immediately to reduce layout shift and give faster perceived response.
+## Performance optimizations applied
 
-### 6. Small-bundle-friendly setup
-- Vite + ESM produces small dev/production bundles and fast HMR.
-- Components are small and focused which helps tree-shaking.
+1. **Lazy-loading (IntersectionObserver)**
+   - Images/videos load only when they enter the viewport. `useIntersectionObserver` supports `once: true` and `hasRendered` to avoid repeated toggles.
 
-### 7. Media cleanup
-- `OptimizedVideo` removes `src` and calls `load()` on cleanup to free memory and avoid continuing network usage.
+2. **Client-side pagination + infinite scroll**
+   - `rooms` slice normalizes all sample rooms into `allRooms` and serves pages into `rooms`.
+   - `useInfiniteScroll` watches the last element and triggers `loadMoreRooms()` with guards to prevent duplicates.
+
+3. **Low-quality image placeholders (LQIP)**
+   - `ProgressiveImage` supports `lowQualitySrc` blurred placeholders for perceived speed.
+
+4. **Memoization & stable callbacks**
+   - Heavy calculations use `useMemo`; event handlers use `useCallback`.
+   - UI components are `React.memo` wrapped.
+
+5. **Throttling & debouncing**
+   - `useThrottle` and `useDebounce` used for high-frequency events (resize, rapid intersections).
+   - Intersection hook uses a small debounce to reduce flicker.
+
+6. **Reserve layout & avoid reflow**
+   - Media containers use `aspect-ratio` to prevent layout shift when media mounts.
+
+7. **Video cleanup & reduced re-renders**
+   - `OptimizedVideo` removes `src` and calls `load()` on unmount; high-frequency events (timeupdate) use refs.
+
+8. **Skeletons with delayed show**
+   - Skeletons are shown immediately but only appear after a small delay (e.g., 120ms) to avoid flicker for fast-loading media.
+
+9. **Virtualization (recommended for large lists)**
+   - For 100s+ rooms consider `react-window` / `react-virtualized`. For ~100–200 rooms with lazy media, current approach is fine.
+
+---
+
+## Accessibility & UX considerations
+
+- `ExpandedVariantsPanel` uses `role="dialog"` and traps focus on open (restores focus on close).
+- `aria-expanded` is applied to See More buttons.
+- Panel can be closed with `Esc` and by clicking outside.
+- `VariantMini` uses `aria-label` and `title` for screen readers and hover previews.
+- When panel opens, media in the panel should mount immediately (force-load for keyboard users).
+
+---
 

@@ -16,8 +16,20 @@ const OptimizedVideo = ({
     const [hasError, setHasError] = useState(false);
     const [isLoaded, setIsLoaded] = useState(false);
     const [shouldLoadVideo, setShouldLoadVideo] = useState(false);
-    const [currentTime, setCurrentTime] = useState(0);
+    // const [currentTimeRef, setcurrentTimeRef] = useState(0);
     const [isSafari, setIsSafari] = useState(false);
+    const [showSkeleton, setShowSkeleton] = useState(false);
+
+    useEffect(() => {
+        let t = null;
+        if (shouldLoadVideo && !isLoaded) {
+            t = setTimeout(() => setShowSkeleton(true), 120); // show skeleton only after 120ms
+        } else {
+            setShowSkeleton(false);
+        }
+        return () => clearTimeout(t);
+    }, [shouldLoadVideo, isLoaded]);
+
 
     useEffect(() => {
         const isSafariBrowser = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
@@ -42,40 +54,42 @@ const OptimizedVideo = ({
         }
     }, [isIntersecting, hasRendered, shouldLoadVideo]);
 
-    // Track video time
+
+    const currentTimeRef = useRef(0);
+
     useEffect(() => {
         const video = videoRef.current;
         if (!video) return;
 
         const handleTimeUpdate = () => {
-            setCurrentTime(video.currentTime);
+            // setcurrentTimeRef(video.currentTimeRef);
+            currentTimeRef.current = video.currentTimeRef; 
         };
 
         video.addEventListener('timeupdate', handleTimeUpdate);
-        return () => {
-            video.removeEventListener('timeupdate', handleTimeUpdate);
-        };
+        return () =>  video.removeEventListener('timeupdate', handleTimeUpdate);
+        
     }, []);
 
     const handleCanPlay = useCallback(() => {
-        console.log('Video can play');
+        // console.log('Video can play');
         setIsLoaded(true);
     }, []);
 
     const handleLoadedData = useCallback(() => {
-        console.log('Video loaded data');
+        // console.log('Video loaded data');
         setIsLoaded(true);
     }, []);
 
     const handleLoadedMetadata = useCallback(() => {
-        console.log('Video loaded metadata');
+        // console.log('Video loaded metadata');
         if (isSafari) {
             setIsLoaded(true);
         }
     }, [isSafari]);
 
     const handleError = useCallback((e) => {
-        console.error('Video error:', e);
+        // console.error('Video error:', e);
         setHasError(true);
         setIsLoaded(true);
         onError?.(e);
@@ -88,17 +102,17 @@ const OptimizedVideo = ({
         const controlVideo = async () => {
             try {
                 if (isHovered) {
-                    if (video.currentTime !== currentTime) {
-                        video.currentTime = currentTime;
+                    if (video.currentTimeRef !== currentTimeRef) {
+                        video.currentTimeRef = currentTimeRef;
                     }
                     await video.play();
-                    console.log('Video playing from time:', currentTime);
+                    // console.log('Video playing from time:', currentTimeRef);
                 } else {
                     video.pause();
-                    console.log('Video paused, showing current frame as thumbnail');
+                    // console.log('Video paused, showing current frame as thumbnail');
                 }
             } catch (error) {
-                console.warn('Video play failed:', error);
+                // console.warn('Video play failed:', error);
                 if (error.name === 'NotAllowedError') {
                     video.muted = true;
                     try {
@@ -111,14 +125,14 @@ const OptimizedVideo = ({
         };
 
         controlVideo();
-    }, [isHovered, shouldLoadVideo, isLoaded, currentTime]);
+    }, [isHovered, shouldLoadVideo, isLoaded, currentTimeRef]);
 
     useEffect(() => {
         if (!shouldLoadVideo || !src || isLoaded) return;
 
         const safariFallbackTimer = setTimeout(() => {
             if (isSafari && !isLoaded) {
-                console.log('Safari fallback: forcing loaded state');
+                // console.log('Safari fallback: forcing loaded state');
                 setIsLoaded(true);
             }
         }, 3000);
@@ -147,7 +161,7 @@ const OptimizedVideo = ({
             {shouldLoadVideo && src && !hasError && (
                 <video
                     ref={videoRef}
-                    src={src+'#t=0.001'}
+                    src={src + '#t=0.001'}
                     muted={muted}
                     loop={loop}
                     playsInline={playsInline}
@@ -163,7 +177,7 @@ const OptimizedVideo = ({
                 />
             )}
 
-            {shouldLoadVideo && !isLoaded && !hasError && (
+            {shouldLoadVideo && !isLoaded && !hasError && showSkeleton && (
                 <div className="optimized-video__loading">
                     <div className="video-skeleton"></div>
                 </div>

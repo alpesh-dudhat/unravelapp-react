@@ -1,12 +1,36 @@
-import React, { useCallback, useEffect, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { loadRooms, loadMoreRooms } from '../features/roomSlice';
 import RoomCard from './RoomCard';
 import RoomCardSkeleton from './RoomCardSkeleton';
 import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
+import ExpandedVariantsPanel from './ExpandedVariantsPanel';
 
 const RoomList = () => {
     const dispatch = useDispatch();
+
+    const [expandedRoomId, setExpandedRoomId] = useState(null);
+    const htmlEl = document.documentElement;
+
+    const handleExpand = useCallback((roomId) => {
+        setExpandedRoomId(roomId);
+        if (htmlEl) {
+            htmlEl.style.overflow = 'hidden';
+        }
+    }, []);
+
+    const handleClosePanel = useCallback(() => {
+        setExpandedRoomId(null);
+        if (htmlEl) {
+            htmlEl.style.overflow = 'auto';
+        }
+    }, []);
+
+    const handleSelectVariant = useCallback((variant, room) => {
+        console.log('Selected variant', variant, 'from room', room);
+    }, []);
+
+
     const {
         rooms,
         status,
@@ -36,24 +60,21 @@ const RoomList = () => {
         handleLoadMore,
         hasMore,
         isLoadingMore,
-        { rootMargin: '200px' } // Start loading earlier for smoother experience
+        { rootMargin: '350px' , threshold: 0} // Start loading earlier for smoother experience
     );
 
-    // Generate skeleton cards for initial loading
     const initialSkeletons = useMemo(() =>
         Array.from({ length: 6 }, (_, index) => (
             <RoomCardSkeleton key={`skeleton-${index}`} />
         ))
         , []);
 
-    // Generate loading more skeletons
     const loadingMoreSkeletons = useMemo(() =>
         Array.from({ length: 3 }, (_, index) => (
             <RoomCardSkeleton key={`loading-more-${currentPage}-${index}`} />
         ))
         , [currentPage]);
 
-    // Error boundary fallback
     if (status === 'failed') {
         return (
             <div className="room-list-error">
@@ -113,7 +134,7 @@ const RoomList = () => {
                                     ref={isLastElement ? lastRoomElementRef : null}
                                     className="room-card"
                                 >
-                                    <RoomCard room={room} />
+                                    <RoomCard room={room} onExpand={handleExpand} />
                                 </div>
                             );
                         })}
@@ -123,11 +144,16 @@ const RoomList = () => {
                                 {loadingMoreSkeletons}
                             </div>
                         )}
-
-
                     </>
                 )}
             </div>
+            {expandedRoomId && (
+                <ExpandedVariantsPanel
+                    room={rooms.find(r => r.id === expandedRoomId)}
+                    onClose={handleClosePanel}
+                    onSelectVariant={handleSelectVariant}
+                />
+            )}
             {!hasMore && rooms.length > 0 && (
                 <div className="room-list-end">
                     <p>You've seen all available rooms!</p>

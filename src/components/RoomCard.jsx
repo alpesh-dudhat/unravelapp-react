@@ -1,29 +1,32 @@
 import React, { useState, useMemo, useCallback, memo } from 'react';
 import ProgressiveImage from './ProgressiveImage';
 import OptimizedVideo from './OptimizedVideo';
+import VariantMini from './VariantMini';
 
-const RoomCard = ({ room }) => {
+const RoomCard = ({ room, onExpand }) => {
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
-    // Memoize expensive calculations
+    const visibleVariants = useMemo(() => (room.variants || []).slice(0, 2), [room.variants]);
+    const showSeeMore = (room.variants?.length || 0) >= 2;
+
     const cheapestVariant = useMemo(() =>
         room.variants
             ?.filter(v => v.isBookable)
             ?.sort((a, b) => a.price - b.price)[0] || room.variants?.[0]
         , [room.variants]);
 
-    const displayProperties = useMemo(() =>
-        cheapestVariant?.displayProperties || []
-        , [cheapestVariant]);
+    // const displayProperties = useMemo(() =>
+    //     cheapestVariant?.displayProperties || []
+    //     , [cheapestVariant]);
 
-    const bedTypeDisplay = useMemo(() =>
-        displayProperties.find(p => p.name === 'bed_type')?.value || room.bedType || ""
-        , [displayProperties, room.bedType]);
+    // const bedTypeDisplay = useMemo(() =>
+    //     displayProperties.find(p => p.name === 'bed_type')?.value || room.bedType || ""
+    //     , [displayProperties, room.bedType]);
 
-    const capacityDisplay = useMemo(() =>
-        displayProperties.find(p => p.name === 'adult_occupancy')?.value ||
-        (room.capacity ? `Up to ${room.capacity.max_occupancy} guests` : "")
-        , [displayProperties, room.capacity]);
+    // const capacityDisplay = useMemo(() =>
+    //     displayProperties.find(p => p.name === 'adult_occupancy')?.value ||
+    //     (room.capacity ? `Up to ${room.capacity.max_occupancy} guests` : "")
+    //     , [displayProperties, room.capacity]);
 
     const { hasMedia, mediaType, mediaSrc, roomImages } = useMemo(() => {
         const hasMedia = room.media || (room.roomImages && room.roomImages.length > 0);
@@ -49,7 +52,7 @@ const RoomCard = ({ room }) => {
     const currentImage = roomImages[currentImageIndex];
     const lowQualitySrc = useMemo(() => {
         if (!currentImage) return '';
-        return `${currentImage}?w=20&q=10`; 
+        return `${currentImage}?w=20&q=10`;
     }, [currentImage]);
 
     return (
@@ -97,6 +100,32 @@ const RoomCard = ({ room }) => {
             )}
 
             <div className="room-card__content">
+                <div className="room-card__variants-collapsed">
+                    <h3 className="room-card__title">{room.name}</h3>
+                    <div className="room-card__price-section">
+                        <span className="room-card__price-info">{cheapestVariant?.priceInfo}</span>
+
+                        <span className="room-card__price">
+                            {room.currency} {room.price.toLocaleString()}
+                        </span>
+                    </div>
+
+                    <span className="room-card__variants_title">Variants</span>
+                    <div className="room-card__variants">
+
+                        {visibleVariants.map((v, i) => (
+                            <VariantMini key={v.id || i} index={i} variant={v} />
+                        ))}
+                    </div>
+                    {showSeeMore && (
+                        <button className="room-card__select-btn" onClick={() => onExpand?.(room.id)}>
+                            See more
+                        </button>
+                    )}
+                </div>
+            </div>
+
+            {/* <div className="room-card__content">
                 <h3 className="room-card__title">{room.name}</h3>
 
                 <div className="room-card__row">
@@ -139,7 +168,7 @@ const RoomCard = ({ room }) => {
                 >
                     {room.isBookable ? 'Select Room' : 'Not Available'}
                 </button>
-            </div>
+            </div> */}
         </>
     );
 };

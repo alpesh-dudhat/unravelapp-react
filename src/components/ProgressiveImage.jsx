@@ -1,36 +1,48 @@
 import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { useIntersectionObserver } from '../hooks/useIntersectionObserver';
 
-const ProgressiveImage = ({ 
-    src, 
-    srcSet, 
-    alt, 
-    className = '', 
+const ProgressiveImage = ({
+    src,
+    srcSet,
+    alt,
+    className = '',
     width,
     height,
     sizes = '(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw',
     placeholder = '/placeholder-image.jpg',
     lowQualitySrc,
     onError,
-    ...props 
+    ...props
 }) => {
     const [isLoaded, setIsLoaded] = useState(false);
     const [hasError, setHasError] = useState(false);
     const [currentSrc, setCurrentSrc] = useState(placeholder);
     const imageRef = useRef(null);
-    
+
     const [containerRef, isIntersecting] = useIntersectionObserver({
         threshold: 0.1,
         rootMargin: '50px'
     });
-
-    // Only load images when they are visible
+     // Only load images when they are visible
     const shouldLoad = isIntersecting;
+
+    const [showSkeleton, setShowSkeleton] = useState(false);
+    useEffect(() => {
+        let t = null;
+        if (shouldLoad && !isLoaded) {
+            t = setTimeout(() => setShowSkeleton(true), 120); // show skeleton only after 120ms
+        } else {
+            setShowSkeleton(false);
+        }
+        return () => clearTimeout(t);
+    }, [shouldLoad, isLoaded]);
+    
+   
 
     // Generate optimized srcSet
     const optimizedSrcSet = useMemo(() => {
         if (srcSet) return srcSet;
-        
+
         if (src) {
             const widths = [320, 640, 768, 1024, 1280, 1920];
             return widths
@@ -96,7 +108,7 @@ const ProgressiveImage = ({
                     />
                 </div>
             )}
-            
+
             {shouldLoad && !hasError && (
                 <img
                     ref={imageRef}
@@ -107,26 +119,24 @@ const ProgressiveImage = ({
                     width={width}
                     height={height}
                     onError={handleError}
-                    className={`progressive-image ${
-                        isLoaded && currentSrc === src 
-                            ? 'progressive-image--loaded' 
+                    className={`progressive-image ${isLoaded && currentSrc === src
+                            ? 'progressive-image--loaded'
                             : 'progressive-image--loading'
-                    } ${
-                        currentSrc !== src 
-                            ? 'progressive-image--low-quality' 
+                        } ${currentSrc !== src
+                            ? 'progressive-image--low-quality'
                             : 'progressive-image--high-quality'
-                    }`}
+                        }`}
                     loading="lazy"
                     {...props}
                 />
             )}
-            
-            {(!shouldLoad || !isLoaded) && !hasError && (
+
+            {(!shouldLoad || !isLoaded) && !hasError && showSkeleton && (
                 <div className="progressive-image__skeleton">
                     <div className="image-skeleton"></div>
                 </div>
             )}
-            
+
             {hasError && (
                 <img
                     src={placeholder}
